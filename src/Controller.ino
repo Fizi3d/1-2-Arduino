@@ -62,6 +62,11 @@ float deltaPitch = 0;
 
 unsigned long tStart;
 
+float accMag = 0;
+float prevAccMag = 0;
+float deltaAcc = 0;
+float shakeValue = 0;
+
 unsigned long currentGame;
 const int button = 4;
 
@@ -131,6 +136,22 @@ void calculateAngle() {
   pitchComp = 0.25*pitchLP + 0.75*(pitchComp + deltaPitch);
 }
 
+void calculateMovement() {
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  Ax = a.acceleration.x/9.81;
+  Ay = a.acceleration.y/9.81;
+  Az = a.acceleration.z/9.81;
+
+  Ax = xScale * (Ax-xOffset);
+  Ay = yScale * (Ay-yOffset);
+  Az = zScale * (Az-zOffset);
+
+  accMag = sqrt(Ax*Ax + Ay*Ay + Az*Az);
+  deltaAcc = abs(accMag - prevAccMag);
+  shakeValue = shakeValue + deltaAcc;
+  prevAccMag = accMag;
+}
 
 void setup() {
   radio.begin();
