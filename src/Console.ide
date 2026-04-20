@@ -1,13 +1,10 @@
-//Console source code goes here
-
-
 #define CSN_PIN 8;
 #define CE_PIN 7;
 #define AMPLIFICATION 1;
 #define WRITE_ADDRESS "00001";
 #define CONTROLLER_1_ADDRESS "00002";
 #define CONTROLLER_2_ADDRESS "00003";
-
+#define LED_PIN 5;
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -49,7 +46,16 @@ SEND *CONSOLE/CONTROLLER* StructData
 
 */
 
-void loop() {
-  // put your main code here, to run repeatedly:
 
+void loop() {
+  //This is gonna be the loop for the master when it's not in a game. Games will loop inside their own function.
+
+}
+
+
+void quickDraw() {
+  bool inGame = true;
+  while (inGame) {
+    
+  }
 }
