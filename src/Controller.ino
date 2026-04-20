@@ -1,0 +1,37 @@
+#define CSN_PIN 8;
+#define CE_PIN 7;
+#define AMPLIFICATION 1;
+#define READ_ADDRESS "00001";
+
+//"00003" for controller 2
+#define WRITE_ADDRESS "00002";
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio(CE_PIN, CSN_PIN);
+
+void setup() {
+  radio.begin();
+  radio.openWritingPipe(WRITE_ADDRESS);
+  radio.openReadingPipe(READ_ADDRESS);
+  
+}
+
+
+void loop() {
+  //this is the state of the controller when it's not in a game. It just listens for a signal to tell it what game to play.
+  int game = 0;
+  while (!radio.available());
+  radio.read(&game, sizeof(game));
+  switch (game) {
+    case 1:
+    playQuickDraw();
+    break;
+  }
+}
+  
+void playQuickDraw() {
+  
+}
