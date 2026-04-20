@@ -4,7 +4,6 @@
 #define WRITE_ADDRESS "00001";
 #define CONTROLLER_1_ADDRESS "00002";
 #define CONTROLLER_2_ADDRESS "00003";
-#define LED_PIN 5;
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -12,7 +11,7 @@
 #include <LiquidCrystal.h>
 
 //RS, E, D4, D5, D6, D7
-LiquidCrystal lcd(12,11,6,4,3,2); 
+LiquidCrystal lcd(2,4,6,7,8,9); 
 
 RF24 radio(CE_PIN, CSN_PIN);
 
