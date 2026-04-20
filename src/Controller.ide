@@ -18,3 +18,18 @@ void setup() {
   radio.openReadingPipe(READ_ADDRESS);
   
 }
+
+
+void loop() {
+  //this is the state of the controller when it's not in a game. It just listens for a signal to tell it what game to play.
+  int game = 0;
+  while (!radio.available());
+  radio.read(&game, sizeof(game));
+  switch (game) {
+    case 1:
+    playQuickDraw();
+    break;
+  }
+  
+  
+}
