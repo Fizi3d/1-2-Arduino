@@ -1,5 +1,7 @@
-#define CSN_PIN 8;
-#define CE_PIN 7;
+//D5
+#define CSN_PIN 5;
+//D3
+#define CE_PIN 3;
 #define AMPLIFICATION 1;
 #define WRITE_ADDRESS "00001";
 #define CONTROLLER_1_ADDRESS "00002";
