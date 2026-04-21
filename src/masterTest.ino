@@ -336,7 +336,7 @@ void sodaShake() {
             }
             else {
               updateScreen("Green got", "sliced!");
-              greenScore++;
+              orangeScore++;
             }
             waiting = false;
             delay(2000);
