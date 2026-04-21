@@ -40,8 +40,12 @@ void updateScreen(String l1, String l2="") {
 
   if (l1 != last1 || l2 != last2) {
     lcd.clear();
+
     lcd.setCursor(0,0);
     lcd.print(l1);
+
+    lcd.setCursor(0,1);
+    lcd.print("                "); 
     lcd.setCursor(0,1);
     lcd.print(l2);
 
