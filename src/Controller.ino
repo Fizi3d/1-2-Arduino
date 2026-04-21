@@ -233,10 +233,6 @@ void playQuickDraw() {
       }
     }
     calculateAngle();
-    Serial.println(pitchComp);
-    if (digitalRead(button) == HIGH) {
-      Serial.println("PRESSED");
-    }
     if ((pitchComp > -15) && (digitalRead(button) == HIGH)) {
       int ident = IDENTIFIER;
       radio.stopListening();
@@ -244,6 +240,7 @@ void playQuickDraw() {
       radio.startListening();
       inGame = false;
     }
+    delay(1);
   }
 }
 
