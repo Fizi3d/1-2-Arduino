@@ -76,6 +76,7 @@ float maxShakeValue = 1000;
 
 unsigned long currentGame;
 const int button = 4;
+const int led = 7;
 
 
 Adafruit_MPU6050 mpu;
@@ -176,7 +177,7 @@ void setup() {
 
   Serial.println("Controller ready");
   
-  pinMode(button, INPUT);
+  pinMode(button, INPUT_PULLUP);
   // Initializes the MPU6050
   mpu.begin();
   Serial.println("MPU6050 Started!");
@@ -203,6 +204,11 @@ void loop() {
     Serial.println("Initialized");
   }
   radio.read(&game, sizeof(game));
+  if (digitalRead(button) == LOW) {
+    digitalWrite(led, HIGH);
+  } else {
+    digitalWrite(led, LOW);
+  }
   calculateAngle();
   switch (game) {
     case 1:
@@ -227,13 +233,17 @@ void playQuickDraw() {
     if (radio.available()) {
       int signal;
       radio.read(&signal,sizeof(signal));
-      if (signal == 1) {
+      if (signal == 5) {
         inGame = false;
         break;
       }
     }
     calculateAngle();
-    if ((pitchComp > -15) && (digitalRead(button) == HIGH)) {
+    if (digitalRead(button) == LOW) {
+      Serial.println("PRESSED");
+      Serial.println(pitchComp);
+    }
+    if ((pitchComp > -15) && (digitalRead(button) == LOW)) {
       int ident = IDENTIFIER;
       radio.stopListening();
       radio.write(&ident, sizeof(ident));
@@ -247,7 +257,7 @@ void playQuickDraw() {
 void playSodaShake() {
   shakeValue = 0;
   delay(5000);
-  // Recieve totalShakeValue
+  bool inGame = true;
   while (digitalRead(button) == LOW) {
     calculateMovement();
     totalShakeValue += shakeValue;
