@@ -281,15 +281,12 @@
 
   void playSamuraiSlicer() {
     delay(3000);
-    float samStartTime = millis();
     bool inGame = true;
     while (inGame) {
       calculateAngle();
       if (pitchComp < 30) {
-        float samStopTime = millis();
-        float cutTime = samStopTime - samStartTime;
+        // Send cut
         inGame = false;
-        // Send cutTime
       }
       delay(5);
     }
