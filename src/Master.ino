@@ -24,44 +24,65 @@ const byte rxAddr[6] = "00002"; // controller → console
 
 //menu
 int menuIndex = 0;
-String menuItems[2] = {"Quick Draw", "Soda Shake"};
+String menuItems[3] = {"Quick Draw", "Soda Shake", "Samurai Slash"};
 
 //button pin
 #define BTN_UP A0
 
 #define BTN_SELECT A1
 
-void display(String line1, String line2=""){
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print(line1);
-  lcd.setCursor(0,1);
-  lcd.print(line2);
+
+
+
+void updateScreen(String l1, String l2="") {
+  static String last1 = "";
+  static String last2 = "";
+
+  if (l1 != last1 || l2 != last2) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(l1);
+    lcd.setCursor(0,1);
+    lcd.print(l2);
+
+    last1 = l1;
+    last2 = l2;
+  }
 }
 
+// ================= MENU =================
 void menu(){
   lcd.clear();
-  lcd.setCursor(0,0);
 
-  if(menuIndex == 0){
-    lcd.print(">");
-  }
-  else{
-    lcd.print(" ");
-  }
+  for(int i = 0; i < 2; i++){
+    int itemIndex = (menuIndex + i) % 3;
 
-  lcd.print(menuItems[0]);
+    lcd.setCursor(0, i);
 
-  lcd.setCursor(0,1);
+    if(i == 0){
+      lcd.print("> ");
+    } 
+    
+    else {
+      lcd.print("  ");
+    }
 
-  if(menuIndex==1){
-    lcd.print(">");
+    lcd.print(menuItems[itemIndex]);
   }
-  else{
-    lcd.print(" ");
-  }
-  lcd.print(menuItems[1]);
 }
+
+void showResult(String l1, String l2="") {
+  updateScreen(l1, l2);
+  delay(3000);
+}
+
+String getBar(int level) {
+  String bar = "";
+  for(int i=0;i<level;i++) bar += "#";
+  for(int i=level;i<5;i++) bar += "-";
+  return bar;
+}
+
 void setup() {
   pinMode(10, OUTPUT);
   digitalWrite(10, HIGH);
@@ -77,14 +98,16 @@ void setup() {
 
   radio.stopListening();
 
-  Serial.println("Console ready");
+  //Serial.println("Console ready");
 
   lcd.begin(16,2);  //16 columns and 2 rows
 
   pinMode(BTN_UP, INPUT_PULLUP);
   pinMode(BTN_SELECT, INPUT_PULLUP);
-  delay(2000);
+  delay(1000);
 
+  updateScreen("Console Ready");
+  delay(1500);
 
 
   menu();
@@ -116,17 +139,15 @@ SEND *CONSOLE/CONTROLLER* StructData
 
 
 void loop() {
-  //This is gonna be the loop for the master when it's not in a game. Games will loop inside their own function.
-
+//This is gonna be the loop for the master when it's not in a game. Games will loop inside their own function.
   if(digitalRead(BTN_UP) == LOW){
-    menuIndex--;
-    if(menuIndex<0){
-      menuIndex=1;
+    menuIndex++;
+    if(menuIndex > 2){
+      menuIndex = 0;
     }
     menu();
     delay(200);
   }
-
 
   if(digitalRead(BTN_SELECT) == LOW){
     
@@ -136,29 +157,32 @@ void loop() {
     else if (menuIndex == 1){
       sodaShake();
     }
-
+    else if (menuIndex == 2){
+      //samuraiSlash();
+    }
+    updateScreen("Returning...", "Menu");
+    delay(1500);
     menu();
-    delay(300);
+    
   }
 }
 
 
 void quickDraw() {
-  Serial.println("started");
+  //Serial.println("started");
   int gameId = 1;
   radio.write(&gameId,sizeof(gameId));
   Serial.println("initialized");
 
 
   //DISPLAY START TEXT
-  display("Wait for \"DRAW\"", "Then SHOOT!");
+  updateScreen("Wait for \"DRAW\"", "Then SHOOT!");
   delay(3000);
-  display("False word=", "Dont press!");
+  updateScreen("False word=", "Dont press!");
   delay(3000);
 
-  display("START!");
+  updateScreen("START!");
   delay(1000);
-  
 
 
   bool inGame = true;
@@ -178,29 +202,35 @@ void quickDraw() {
 
       if (radio.available()) {
         radio.read(&identifier, sizeof(identifier));
-        if (identifier == 1 || identifier == 2) {
-          if (radio.available()) {
-            if (!draw) display("Too Early!", "Both Lose!");
-            else display("It's a Tie!", "within 5ms");
+        if (!draw) {
+          if (identifier==1) {
+            showResult("Too Early!", "Green Loses!");
           }
-          
+          else if(identifier==2){
+            showResult("Too Early!", "Orange Loses!");
+          }
+        }
+        else{
           if (identifier == 1) {
-            if (!draw) display("Too Early!", "Blue Loses!");
-            else display("Blue Wins!");
+            showResult("Green Wins!");
+            if (radio.available()) {
+              showResult("It's A Tie!");
+            }
           }
           else if (identifier == 2) {
-            if (!draw) display("Too Early!", "Red Loses!");
-            else display("Blue Wins!");
+            showResult("Orange Wins!");
+            if (radio.available()) {
+              showResult("It's A Tie!");
+            }
           }
-          delay(3000);
+        }
           inGame = false;
           break;
-        }
       }
     }
     if (draw && inGame) {
       inGame = false;
-      display("Too Slow!","No Winners!");
+      updateScreen("Too Slow!","No Winners!");
       delay(3000);
     }
     randomWord > 0 ? randomWord--: randomWord = randomWord;
@@ -208,14 +238,14 @@ void quickDraw() {
     if (generatedWord == "DRAW!") draw = true;
     // Show word
     if (inGame) {
-      display(generatedWord);
+      updateScreen(generatedWord);
     }
   }
   radio.flush_rx();
   radio.stopListening();
   int end = 5;
   radio.write(&end, sizeof(end));
-  return;
+
 }
 
 /*instructions: one controller is going to be a can of soda. Players take turns shaking and passing it around.
@@ -232,21 +262,21 @@ void sodaShake() {
   int thresh = random(300,600);
   radio.write(&thresh,sizeof(thresh));
   float shakeValue;
-
-  display("Shake the soda!","but be careful..");
+  
+  updateScreen("Shake the soda!","but be careful..");
   delay(2000);
-  display("Too much and","it might burst!");
+  updateScreen("Too much and","it might burst!");
   delay(2000);
 
   while (inGame) {
     delay(1000);
-    display("Shake!");
+    updateScreen("Shake!");
     radio.startListening();
     while (!radio.available());
     radio.read(&shakeValue, sizeof(shakeValue));
 
     if (shakeValue == -1) {
-      display("BOOM!","You Lost!");
+      updateScreen("BOOM!","You Lost!");
       radio.flush_rx();
       radio.stopListening();
       delay(5000);
@@ -258,22 +288,14 @@ void sodaShake() {
     float huh = shakeValue / thresh * 5;
     int what = int(trunc(huh));
     if (what < 2) {
-      Serial.println(shakeValue);
-      Serial.println(thresh);
-      Serial.println(what*2);
-      display(status[what*2],status[what*2+1]);
+     updateScreen(status[what*2], status[what*2+1]);
     }
     else {
       int funny = random(2,9);
-      Serial.println(shakeValue);
-      Serial.println(thresh);
-      Serial.println(funny);
-      Serial.println(status[funny*2] + " " + status[funny*2 + 1]);
-      display(status[funny*2], status[funny*2 + 1]);
+      updateScreen(status[funny*2], status[funny*2+1]);
     }
 
     delay(3000);
-    display("Ready?");
+    updateScreen("Ready?");
   }
 }
-
