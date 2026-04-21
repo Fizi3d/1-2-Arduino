@@ -162,7 +162,7 @@ void calculateMovement() {
 void setup() {
   radio.begin();
   radio.openWritingPipe(addresses[0]);
-  radio.openReadingPipe(addresses[1]);
+  radio.openReadingPipe(1,addresses[1]);
   
   pinMode(button, INPUT);
   // Begins serial monitor
@@ -208,17 +208,17 @@ void playQuickDraw() {
   while (inGame) {
     if (radio.available()) {
       int signal;
-      radio.read(&signal,sizeOf(signal));
+      radio.read(&signal,sizeof(signal));
       if (signal == 1) {
         inGame = false;
         break;
       }
     }
     calculateAngle();
-    if (pitchComp > 75) && (digitalRead(button) == HIGH) {
+    if ((pitchComp > 75) && (digitalRead(button) == HIGH)) {
       int ident = IDENTIFIER;
       radio.stopListening();
-      radio.write(&ident, sizeOf(ident));
+      radio.write(&ident, sizeof(ident));
       radio.startListening();
       inGame = false;
     }
@@ -227,7 +227,7 @@ void playQuickDraw() {
 
 void playSodaShake() {
   shakeValue = 0;
-  delay(5000)
+  delay(5000);
   // Recieve totalShakeValue
   while (digitalRead(button) == LOW) {
     calculateMovement();
@@ -248,7 +248,7 @@ void playSamuraiSlicer() {
     // Send cutTime
   }
 }
-
+/*
 void playSamuraiCatcher() {
   float samStartTime = millis();
   if (digitalRead(button) == HIGH) { // Could change this into an interrupt
@@ -260,3 +260,4 @@ void playSamuraiCatcher() {
 
   delay(5);
 }
+*/
