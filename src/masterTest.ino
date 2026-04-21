@@ -141,15 +141,14 @@ SEND *CONSOLE/CONTROLLER* StructData
 void loop() {
   //This is gonna be the loop for the master when it's not in a game. Games will loop inside their own function.
 
-  if(digitalRead(BTN_UP) == LOW){
-    menuIndex--;
-    if(menuIndex<0){
-      menuIndex=2;
+   if(digitalRead(BTN_UP) == LOW){
+    menuIndex++;
+    if(menuIndex > 2){
+      menuIndex = 0;
     }
     menu();
     delay(200);
   }
-
 
   if(digitalRead(BTN_SELECT) == LOW){
     
