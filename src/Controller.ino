@@ -72,11 +72,9 @@ float prevAccMag = 0;
 float deltaAcc = 0;
 float shakeValue = 0;
 float totalShakeValue = 0;
-float maxShakeValue = 1000;
 
 unsigned long currentGame;
 const int button = 4;
-const int led = 7;
 
 
 Adafruit_MPU6050 mpu;
@@ -204,11 +202,6 @@ void loop() {
     Serial.println("Initialized");
   }
   radio.read(&game, sizeof(game));
-  if (digitalRead(button) == LOW) {
-    digitalWrite(led, HIGH);
-  } else {
-    digitalWrite(led, LOW);
-  }
   calculateAngle();
   switch (game) {
     case 1:
@@ -255,17 +248,26 @@ void playQuickDraw() {
 }
 
 void playSodaShake() {
-  shakeValue = 0;
-  delay(5000);
+  radio.flush_rx();
+  while (!radio.available());
+  int threshold;
+  radio.read(&threshold,sizeof(threshold));
+  delay(4000);
+  if (radio.available())
   bool inGame = true;
-  while (digitalRead(button) == LOW) {
-    calculateMovement();
-    totalShakeValue += shakeValue;
-    if (totalShakeValue > maxShakeValue) { // Could change this into an interrupt
-      // Send soda explodes
+  while (inGame) {
+    shakeValue = 0;
+    // Display READY?
+    delay(2000);
+    // Display SHAKE!
+    while (digitalRead(button) == HIGH) {
+      calculateMovement();
+      totalShakeValue += shakeValue;
+      if (totalShakeValue > threshold) {
+        // Send soda explodes
+      }
     }
   }
-  // Send totalShakeValue
 }
 
 void playSamuraiSlicer() {
