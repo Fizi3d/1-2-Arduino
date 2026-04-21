@@ -1,5 +1,5 @@
-#define CSN_PIN 8;
-#define CE_PIN 7;
+#define CSN_PIN 6;
+#define CE_PIN 5;
 #define AMPLIFICATION 1;
 #define READ_ADDRESS "00001";
 
@@ -66,6 +66,8 @@ float accMag = 0;
 float prevAccMag = 0;
 float deltaAcc = 0;
 float shakeValue = 0;
+float totalShakeValue = 0;
+float maxShakeValue = 1000;
 
 unsigned long currentGame;
 const int button = 4;
@@ -191,9 +193,41 @@ void loop() {
   
 void playQuickDraw() {
   calculateAngle();
-  if (pitchComp > 75) && (button == HIGH) {
+  if (pitchComp > 75) && (digitalRead(button) == HIGH) {
     //Send a "shot" signal
   }
+
+void playSodaShake() {
+  shakeValue = 0;
+  // Recieve totalShakeValue
+  while (digitalRead(button) != HIGH) {
+    calculateMovement();
+    totalShakeValue += shakeValue;
+    if (totalShakeValue > maxShakeValue) { // Could change this into an interrupt
+      // Send soda explodes
+    }
+  }
+  // Send totalShakeValue
+}
+
+void playSamuraiSlicer() {
+  float samStartTime = millis();
+  calculateAngle();
+  if (pitchComp < 30) {
+    float samStopTime = millis();
+    float cutTime = samStopTime - samStartTime;
+    // Send cutTime
+  }
+}
+
+void playSamuraiCatcher() {
+  float samStartTime = millis();
+  if (digitalRead(button) == HIGH) { // Could change this into an interrupt
+    float samStopTime = millis();
+    float catchTime = samStopTime - samStartTime;
+    // Send catchTime
+  }
+}
 
   delay(5);
 }
