@@ -71,7 +71,6 @@
   float prevAccMag = 0;
   float deltaAcc = 0;
   float shakeValue = 0;
-  float totalShakeValue = 0;
 
   unsigned long currentGame;
   const int button = 4;
@@ -161,10 +160,10 @@
   }
 
   void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     radio.begin();
-    radio.setPALevel(RF24_PA_LOW);
+    radio.setPALevel(RF24_PA_HIGH);
     radio.setDataRate(RF24_250KBPS);
     radio.setChannel(76);
 
@@ -252,23 +251,27 @@
     while (!radio.available());
     int threshold;
     radio.read(&threshold,sizeof(threshold));
-    delay(4000);
-    if (radio.available())
+    radio.stopListening();
+    delay(5000);
     bool inGame = true;
     while (inGame) {
-      shakeValue = 0;
-      // Display READY?
-      delay(1000);
-      // Display SHAKE!
+      delay(4000);
       while (digitalRead(button) == HIGH) {
         calculateMovement();
-        totalShakeValue += shakeValue;
-        if (totalShakeValue > threshold) {
-          // Send soda explodes
+        Serial.println(shakeValue);
+        if (shakeValue > threshold) {
+          float lost = -1;
+          radio.write(&lost,sizeof(lost));
+          radio.startListening();
+          inGame = false;
+          break;
         }
+        delay(20);
       }
-      // Send totalShakeValue
-      Delay(2000);
+
+      if (inGame) {
+        radio.write(&shakeValue, sizeof(shakeValue));
+      }
     }
   }
 
