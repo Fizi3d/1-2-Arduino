@@ -8,6 +8,8 @@
 
 #define WRITE_ADDRESS "00002"
 
+const byte addresses[][6] = {WRITE_ADDRESS, READ_ADDRESS};
+
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -159,8 +161,8 @@ void calculateMovement() {
 
 void setup() {
   radio.begin();
-  radio.openWritingPipe(WRITE_ADDRESS);
-  radio.openReadingPipe(READ_ADDRESS);
+  radio.openWritingPipe(addresses[0]);
+  radio.openReadingPipe(addresses[1]);
   
   pinMode(button, INPUT);
   // Begins serial monitor
@@ -176,7 +178,6 @@ void setup() {
 
   tStart = millis();
 
-}
 }
 
 
@@ -201,6 +202,7 @@ void loop() {
 }
   
 void playQuickDraw() {
+  delay(7000);
   radio.startListening();
   bool inGame = true;
   while (inGame) {
