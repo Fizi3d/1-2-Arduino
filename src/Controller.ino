@@ -1,10 +1,12 @@
-#define CSN_PIN 6;
-#define CE_PIN 5;
-#define AMPLIFICATION 1;
-#define READ_ADDRESS "00001";
+#define CSN_PIN 6
+#define CE_PIN 5
+#define AMPLIFICATION 1
+#define READ_ADDRESS "00001"
 
-//"00003" for controller 2
-#define WRITE_ADDRESS "00002";
+//2 for red
+#define IDENTIFIER 1
+
+#define WRITE_ADDRESS "00002"
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -188,19 +190,44 @@ void loop() {
     case 1:
     playQuickDraw();
     break;
+
+    case 2:
+    playSodaShake();
+    break;
+
+    case 3:
+    playSamuraiSlicer();
   }
 }
   
 void playQuickDraw() {
-  calculateAngle();
-  if (pitchComp > 75) && (digitalRead(button) == HIGH) {
-    //Send a "shot" signal
+  radio.startListening();
+  bool inGame = true;
+  while (inGame) {
+    if (radio.available()) {
+      int signal;
+      radio.read(&signal,sizeOf(signal));
+      if (signal == 1) {
+        inGame = false;
+        break;
+      }
+    }
+    calculateAngle();
+    if (pitchComp > 75) && (digitalRead(button) == HIGH) {
+      int ident = IDENTIFIER;
+      radio.stopListening();
+      radio.write(&ident, sizeOf(ident));
+      radio.startListening();
+      inGame = false;
+    }
   }
+}
 
 void playSodaShake() {
   shakeValue = 0;
+  delay(5000)
   // Recieve totalShakeValue
-  while (digitalRead(button) != HIGH) {
+  while (digitalRead(button) == LOW) {
     calculateMovement();
     totalShakeValue += shakeValue;
     if (totalShakeValue > maxShakeValue) { // Could change this into an interrupt
