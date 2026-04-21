@@ -34,20 +34,12 @@ String menuItems[3] = {"Quick Draw", "Soda Shake", "Samurai Slash"};
 
 
 
-void updateScreen(String l1, String l2="") {
-  static String last1 = "";
-  static String last2 = "";
-
-  if (l1 != last1 || l2 != last2) {
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print(l1);
-    lcd.setCursor(0,1);
-    lcd.print(l2);
-
-    last1 = l1;
-    last2 = l2;
-  }
+void display(String line1, String line2=""){
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(line1);
+  lcd.setCursor(0,1);
+  lcd.print(line2);
 }
 
 // ================= MENU =================
@@ -71,17 +63,7 @@ void menu(){
   }
 }
 
-void showResult(String l1, String l2="") {
-  updateScreen(l1, l2);
-  delay(3000);
-}
 
-String getBar(int level) {
-  String bar = "";
-  for(int i=0;i<level;i++) bar += "#";
-  for(int i=level;i<5;i++) bar += "-";
-  return bar;
-}
 
 void setup() {
   pinMode(10, OUTPUT);
@@ -106,7 +88,7 @@ void setup() {
   pinMode(BTN_SELECT, INPUT_PULLUP);
   delay(1000);
 
-  updateScreen("Console Ready");
+  display("Console Ready");
   delay(1500);
 
 
@@ -160,7 +142,7 @@ void loop() {
     else if (menuIndex == 2){
       samuraiSlash();
     }
-    updateScreen("Returning...", "Menu");
+    display("Returning...", "Menu");
     delay(1500);
     menu();
     
@@ -176,12 +158,12 @@ void quickDraw() {
 
 
   //DISPLAY START TEXT
-  updateScreen("Wait for \"DRAW\"", "Then SHOOT!");
+  display("Wait for \"DRAW\"", "Then SHOOT!");
   delay(3000);
-  updateScreen("False word=", "Dont press!");
+  display("False word=", "Dont press!");
   delay(3000);
 
-  updateScreen("START!");
+  display("START!");
   delay(1000);
 
 
@@ -204,23 +186,23 @@ void quickDraw() {
         radio.read(&identifier, sizeof(identifier));
         if (!draw) {
           if (identifier==1) {
-            showResult("Too Early!", "Green Loses!");
+            display("Too Early!", "Green Loses!");
           }
           else if(identifier==2){
-            showResult("Too Early!", "Orange Loses!");
+            display("Too Early!", "Orange Loses!");
           }
         }
         else{
           if (identifier == 1) {
-            showResult("Green Wins!");
+            display("Green Wins!");
             if (radio.available()) {
-              showResult("It's A Tie!");
+              display("It's A Tie!");
             }
           }
           else if (identifier == 2) {
-            showResult("Orange Wins!");
+            display("Orange Wins!");
             if (radio.available()) {
-              showResult("It's A Tie!");
+              display("It's A Tie!");
             }
           }
         }
@@ -230,7 +212,7 @@ void quickDraw() {
     }
     if (draw && inGame) {
       inGame = false;
-      updateScreen("Too Slow!","No Winners!");
+      display("Too Slow!","No Winners!");
       delay(3000);
     }
     randomWord > 0 ? randomWord--: randomWord = randomWord;
@@ -238,7 +220,7 @@ void quickDraw() {
     if (generatedWord == "DRAW!") draw = true;
     // Show word
     if (inGame) {
-      updateScreen(generatedWord);
+      display(generatedWord);
     }
   }
   radio.flush_rx();
@@ -263,20 +245,20 @@ void sodaShake() {
   radio.write(&thresh,sizeof(thresh));
   float shakeValue;
   
-  updateScreen("Shake the soda!","but be careful..");
+  display("Shake the soda!","but be careful..");
   delay(2000);
-  updateScreen("Too much and","it might burst!");
+  display("Too much and","it might burst!");
   delay(2000);
 
   while (inGame) {
     delay(1000);
-    updateScreen("Shake!");
+    display("Shake!");
     radio.startListening();
     while (!radio.available());
     radio.read(&shakeValue, sizeof(shakeValue));
 
     if (shakeValue == -1) {
-      updateScreen("BOOM!","You Lost!");
+      display("BOOM!","You Lost!");
       radio.flush_rx();
       radio.stopListening();
       delay(5000);
@@ -288,15 +270,15 @@ void sodaShake() {
     float huh = shakeValue / thresh * 5;
     int what = int(trunc(huh));
     if (what < 2) {
-     updateScreen(status[what*2], status[what*2+1]);
+     display(status[what*2], status[what*2+1]);
     }
     else {
       int funny = random(2,9);
-      updateScreen(status[funny*2], status[funny*2+1]);
+      display(status[funny*2], status[funny*2+1]);
     }
 
     delay(3000);
-    updateScreen("Ready?");
+    display("Ready?");
   }
 }
 
@@ -304,11 +286,11 @@ void sodaShake() {
   void samuraiSlash() {
     bool inGame = true;
 
-    updateScreen("Samurai Duel","Commence!");
+    display("Samurai Duel","Commence!");
     delay(2000);
-    updateScreen("Green, hold up", "your sword!");
+    display("Green, hold up", "your sword!");
     delay(3000);
-    updateScreen("Orange, get", "ready to catch!");
+    display("Orange, get", "ready to catch!");
     int gameId = 3;
     radio.write(&gameId,sizeof(gameId));
     Serial.println("initialized");
@@ -320,7 +302,7 @@ void sodaShake() {
     int greenScore = 0;
     int orangeScore = 0;
     while (inGame) {
-      updateScreen("START!");
+      display("START!");
       radio.startListening();
       radio.flush_rx();
       bool waiting = true;
@@ -331,11 +313,11 @@ void sodaShake() {
           radio.read(&packet,sizeof(packet));
           if (packet == 7) {
             if (greenSlicing) {
-              updateScreen("Orange got", "sliced!");
+              display("Orange got", "sliced!");
               greenScore++;
             }
             else {
-              updateScreen("Green got", "sliced!");
+              display("Green got", "sliced!");
               greenScore++;
             }
             waiting = false;
@@ -347,11 +329,11 @@ void sodaShake() {
               radio.read(&packet,sizeof(packet));
               if (packet == 7) {
                 if (greenSlicing) {
-                  updateScreen("Orange caught", "the sword!");
+                  display("Orange caught", "the sword!");
                   orangeScore++;
                 }
                 else {
-                  updateScreen("Green caught", "the sword!");
+                  display("Green caught", "the sword!");
                   greenScore++;
                 }
                 waiting = false;
@@ -365,16 +347,16 @@ void sodaShake() {
       delay(1);
       String orangeString = "Orange: " + orangeScore;
       String greenString = "Green: " + greenScore;
-      updateScreen("test","orangeString");
+      display("test","orangeString");
       if (greenScore - orangeScore > 2) {
-        updateScreen("Green Wins!");
+        display("Green Wins!");
         delay(2000);
         inGame = false;
         int end = 9;
         radio.write(&end, sizeof(end));
       }
       else if (orangeScore - greenScore > 2) {
-        updateScreen("Orange Wins!");
+        display("Orange Wins!");
         delay(2000);
         inGame = false;
         int end = 9;
@@ -386,15 +368,15 @@ void sodaShake() {
 
         greenSlicing = !greenSlicing;
         if (greenSlicing) {
-          updateScreen("Green, hold up", "your sword!");
+          display("Green, hold up", "your sword!");
           delay(2000);
-          updateScreen("Orange, get", "ready to catch!");
+          display("Orange, get", "ready to catch!");
           delay(2000);
         }
         else {
-          updateScreen("Orange, hold up", "your sword!");
+          display("Orange, hold up", "your sword!");
           delay(2000);
-          updateScreen("Green, get", "ready to catch!");
+          display("Green, get", "ready to catch!");
           delay(2000);
         }
       }
