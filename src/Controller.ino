@@ -8,8 +8,8 @@
 
 #define WRITE_ADDRESS "00002"
 
-const byte toConsole[6] = "00001";
-const byte toController[6] = "00002";
+const byte rxAddr[6] = "00001"; // console → controller
+const byte txAddr[6] = "00002"; // controller → console
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -169,8 +169,8 @@ void setup() {
   radio.setDataRate(RF24_250KBPS);
   radio.setChannel(76);
 
-  radio.openReadingPipe(1, toConsole);
-  radio.openWritingPipe(toController);
+  radio.openReadingPipe(1, rxAddr);
+  radio.openWritingPipe(txAddr);
 
   radio.startListening();
 
