@@ -24,7 +24,7 @@ const byte rxAddr[6] = "00002"; // controller → console
 
 //menu
 int menuIndex = 0;
-String menuItems[2] = {"Quick Draw", "Soda Shake", "Samurai Slash"};
+String menuItems[3] = {"Quick Draw", "Soda Shake", "Samurai Slash"};
 
 //button pin
 #define BTN_UP A0
