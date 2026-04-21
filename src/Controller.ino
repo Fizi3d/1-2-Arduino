@@ -284,9 +284,23 @@
     bool inGame = true;
     while (inGame) {
       calculateAngle();
+      if (radio.available()) {
+        int packet;
+        radio.read(&packet,sizeof(packet));
+        if (packet == 8) {
+          playSamuraiCatcher();
+          return;
+        }
+        else if (packet == 9) {
+          return;
+        }
+      }
       if (pitchComp < 30) {
-        // Send cut
-        inGame = false;
+        radio.stopListening();
+        delayMicroseconds(200);
+        int slice = 7;
+        radio.write(&slice,sizeof(slice));
+        delay(1000);
       }
       delay(5);
     }
@@ -297,9 +311,24 @@
     bool inGame = true;
     while (inGame) {
       calculateAngle();
+      if (radio.available()) {
+        int packet;
+        radio.read(&packet,sizeof(packet));
+        if (packet == 8) {
+          playSamuraiSlicer();
+          return;
+        }
+        else if (packet == 9) {
+          return;
+        }
+      }
       if (abs(Az) > 1.2) {
-        // Send caught
+        radio.stopListening();
+        delayMicroseconds(200);
+        int caught = 6;
+        radio.write(&caught,sizeof(caught));
         inGame = false;
+        delay(1000);
       }
       delay(5);
     }
