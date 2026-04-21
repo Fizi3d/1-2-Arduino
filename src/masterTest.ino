@@ -218,6 +218,29 @@ void quickDraw() {
   }
 }
 
+// Pseudocode for samurai training.
+void samuraiTraining() {
+  // Display instructions ("Hold hands above head. One will cut. one will catch." Something like that).
+  bool wasSwordCaught = true;
+  bool inGame = true;
+  while (inGame == true) {
+    // Send first controller to be cutter, and second to be catcher
+    // Receive cutTime and catchTime from controllers
+    if (cutTime != catchTime + 70.0 && cutTime != catchTime - 70.0 && wasSwordCaught == true) {
+      wasSwordCaught = false;
+      // First controller (cutter) won.
+      // End game.
+    }
+    // Send second controller to be cut, and first to be catcher
+    // Receive cutTime and catchTime from controllers
+    if (cutTime != catchTime + 70.0 && cutTime != catchTime - 70.0 && wasSwordCaught == true) {
+      wasSwordCaught = false;
+      // Second controller (cutter) won.
+      // End game.
+    }
+  }
+}
+
 /*instructions: one controller is going to be a can of soda. Players take turns shaking and passing it around.
 Shaking the controller increases the amount of pressure in the can, until it reaches a threshold and explodes.
 When a player has shaken it as much as they want, they press the button and pass it to the next person. 
