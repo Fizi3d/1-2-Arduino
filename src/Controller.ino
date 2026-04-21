@@ -292,6 +292,7 @@
           return;
         }
         else if (packet == 9) {
+          inGame = false;
           return;
         }
       }
@@ -300,6 +301,7 @@
         delayMicroseconds(200);
         int slice = 7;
         radio.write(&slice,sizeof(slice));
+        radio.startListening();
         delay(1000);
       }
       delay(5);
@@ -319,6 +321,7 @@
           return;
         }
         else if (packet == 9) {
+          inGame = false;
           return;
         }
       }
@@ -327,7 +330,7 @@
         delayMicroseconds(200);
         int caught = 6;
         radio.write(&caught,sizeof(caught));
-        inGame = false;
+        radio.startListening();
         delay(1000);
       }
       delay(5);
