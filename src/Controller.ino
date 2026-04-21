@@ -99,6 +99,7 @@ void calibrateGyro() {
   gyroXOffset = sumX/numpoints;
   gyroYOffset = sumY/numpoints;
   gyroZOffset = sumZ/numpoints;
+  Serial.println("Calibration complete!");
 }
 
 void calculateAngle() {
@@ -160,13 +161,18 @@ void calculateMovement() {
 }
 
 void setup() {
-  radio.begin();
+  Serial.begin(115200);
+  if (radio.begin()) {
+    Serial.println("RADIO SUCCESS");
+  } else {
+    Serial.println("RADIO FAILED");
+  }
+  radio.startListening();
   radio.openWritingPipe(addresses[0]);
   radio.openReadingPipe(1,addresses[1]);
+  radio.setPALevel(RF24_PA_HIGH);
   
   pinMode(button, INPUT);
-  // Begins serial monitor
-  Serial.begin(115200);
   // Initializes the MPU6050
   mpu.begin();
   Serial.println("MPU6050 Started!");
@@ -178,13 +184,22 @@ void setup() {
 
   tStart = millis();
 
+  delay(5);
+  radio.flush_rx();
+
 }
 
 
 void loop() {
   //this is the state of the controller when it's not in a game. It just listens for a signal to tell it what game to play.
   int game = 0;
-  while (!radio.available());
+  int time = millis();
+  radio.startListening();
+  while (!radio.available()) {
+    if (millis() - time > 30000) {
+      Serial.println("FAILED");
+    }
+  }
   calculateAngle();
   radio.read(&game, sizeof(game));
   switch (game) {
@@ -202,6 +217,7 @@ void loop() {
 }
   
 void playQuickDraw() {
+  Serial.println("GAME STARTED");
   delay(7000);
   radio.startListening();
   bool inGame = true;
@@ -215,7 +231,11 @@ void playQuickDraw() {
       }
     }
     calculateAngle();
-    if ((pitchComp > 75) && (digitalRead(button) == HIGH)) {
+    Serial.println(pitchComp);
+    if (digitalRead(button) == HIGH) {
+      Serial.println("PRESSED");
+    }
+    if ((pitchComp > -15) && (digitalRead(button) == HIGH)) {
       int ident = IDENTIFIER;
       radio.stopListening();
       radio.write(&ident, sizeof(ident));
