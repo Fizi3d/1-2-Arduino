@@ -8,7 +8,8 @@
 
 #define WRITE_ADDRESS "00002"
 
-const byte addresses[][6] = {WRITE_ADDRESS, READ_ADDRESS};
+const byte toConsole[6] = "00001";
+const byte toController[6] = "00002";
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -168,10 +169,12 @@ void setup() {
   radio.setDataRate(RF24_250KBPS);
   radio.setChannel(76);
 
-  radio.openWritingPipe(address);
-  radio.stopListening();
+  radio.openReadingPipe(1, toConsole);
+  radio.openWritingPipe(toController);
 
-  Serial.println("TX Ready");
+  radio.startListening();
+
+  Serial.println("Controller ready");
   
   pinMode(button, INPUT);
   // Initializes the MPU6050
