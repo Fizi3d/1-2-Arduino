@@ -3,7 +3,8 @@
 
 RF24 radio(3, 5); // CE, CSN
 
-const byte address[6] = "00001";
+const byte rxAddr[6] = "00001"; // console → controller
+const byte txAddr[6] = "00002"; // controller → console
 
 void setup() {
   Serial.begin(9600);
@@ -13,19 +14,30 @@ void setup() {
   radio.setDataRate(RF24_250KBPS);
   radio.setChannel(76);
 
-  radio.openWritingPipe(address);
-  radio.stopListening();
+  radio.openReadingPipe(1, rxAddr);
+  radio.openWritingPipe(txAddr);
 
-  Serial.println("TX Ready");
+  radio.startListening();
+
+  Serial.println("Controller ready");
 }
 
 void loop() {
-  int data = 1;
+  if (radio.available()) {
+    int msg;
+    radio.read(&msg, sizeof(msg));
 
-  bool ok = radio.write(&data, sizeof(data));
+    Serial.print("Got: ");
+    Serial.println(msg);
 
-  Serial.print("Sent OK: ");
-  Serial.println(ok);
+    radio.stopListening();
+    delayMicroseconds(200);
 
-  delay(500);
+    int reply = 2;
+    radio.write(&reply, sizeof(reply));
+
+    Serial.println("Replied");
+
+    radio.startListening();
+  }
 }
