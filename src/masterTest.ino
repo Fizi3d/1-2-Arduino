@@ -1,11 +1,8 @@
 //D5
-#define CSN_PIN 5;
+#define CSN_PIN 5
 //D3
-#define CE_PIN 3;
-#define AMPLIFICATION 1;
-#define WRITE_ADDRESS "00001";
-#define CONTROLLER_1_ADDRESS "00002";
-#define CONTROLLER_2_ADDRESS "00003";
+#define CE_PIN 3
+#define AMPLIFICATION 1
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -17,66 +14,102 @@ LiquidCrystal lcd(2,4,6,7,8,9);
 
 RF24 radio(CE_PIN, CSN_PIN);
 
-const String drawWords[6] = {"DRAW!", "FLAW!", "DRAG!", "DREW!", "DROW!", "DRAT!"}
+const String drawWords[6] = {"DRAW!", "FLAW!", "DRAG!", "DREW!", "DROW!", "DRAT!"};
 
-const byte addresses[][6] = {WRITE_ADDRESS,CONTROLLER_1_ADDRESS,CONTROLLER_2_ADDRESS};
+const String status[20] = {"The can feels", "stable :)","The can is firm","to the touch","LOOK OUT","BEHIND YOU","STOP! STOP NOW!","wait, nevermind","speed up a bit","ur probably fine","You hear a faint","scream inside","The can is now"," very warm", "it's about time", "slowpoke","something smells","funny","DRAW!","oops, wrong game"};
+
+
+const byte txAddr[6] = "00001"; // console → controller
+const byte rxAddr[6] = "00002"; // controller → console
 
 //menu
 int menuIndex = 0;
-String menuItems[2] = {"Quick Draw", "Soda Shake"};
+String menuItems[2] = {"Quick Draw", "Soda Shake", "Samurai Slash"};
 
-//button pins
-#define BTN_UP 9
-#define BTN_DOWN 10
-#define BTN_SELECT A0
+//button pin
+#define BTN_UP A0
 
-void display(String line1, String line2=""){
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print(line1);
-  lcd.setCursor(0,1);
-  lcd.print(line2);
+#define BTN_SELECT A1
+
+
+
+
+void updateScreen(String l1, String l2="") {
+  static String last1 = "";
+  static String last2 = "";
+
+  if (l1 != last1 || l2 != last2) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(l1);
+    lcd.setCursor(0,1);
+    lcd.print(l2);
+
+    last1 = l1;
+    last2 = l2;
+  }
 }
 
+// ================= MENU =================
 void menu(){
   lcd.clear();
-  lcd.setCursor(0,0);
 
-  if(menuIndex == 0){
-    lcd.print(">");
-  }
-  else{
-    lcd.print(" ");
-  }
+  for(int i = 0; i < 2; i++){
+    int itemIndex = (menuIndex + i) % 3;
 
-  lcd.print(menItems[0]);
+    lcd.setCursor(0, i);
 
-  lcd.setCursor(0,1);
+    if(i == 0){
+      lcd.print("> ");
+    } 
+    
+    else {
+      lcd.print("  ");
+    }
 
-  if(menuIndex==1){
-    lcd.print(">");
+    lcd.print(menuItems[itemIndex]);
   }
-  else{
-    lcd.print(" ");
-  }
-  lcd.print(menuItems[1]);
 }
+
+void showResult(String l1, String l2="") {
+  updateScreen(l1, l2);
+  delay(3000);
+}
+
+String getBar(int level) {
+  String bar = "";
+  for(int i=0;i<level;i++) bar += "#";
+  for(int i=level;i<5;i++) bar += "-";
+  return bar;
+}
+
 void setup() {
-  //opens the radio channel at the address in writing mode.
+  pinMode(10, OUTPUT);
+  digitalWrite(10, HIGH);
+  Serial.begin(9600);
+
   radio.begin();
-  radio.openReadingPipe(1,addresses[1]);
-  radio.openReadingPipe(2,addresses[2]);
-  radio.openWritingPipe(addresses[0]);
-  radio.setPALevel(AMPLIFICATION);
+  radio.setPALevel(RF24_PA_HIGH);
+  radio.setDataRate(RF24_250KBPS);
+  radio.setChannel(76);
+
+  radio.openWritingPipe(txAddr);
+  radio.openReadingPipe(1, rxAddr);
+
   radio.stopListening();
+
+  //Serial.println("Console ready");
+
   lcd.begin(16,2);  //16 columns and 2 rows
 
   pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
   pinMode(BTN_SELECT, INPUT_PULLUP);
+  delay(1000);
 
-  display("Quick Draw", "Loading...");
-  delay(2000);
+  updateScreen("Console Ready");
+  delay(1500);
+
+
   menu();
 }
 
@@ -107,61 +140,62 @@ SEND *CONSOLE/CONTROLLER* StructData
 
 void loop() {
   //This is gonna be the loop for the master when it's not in a game. Games will loop inside their own function.
-  if(digitalRead(BTN_UP)==LOW){
+
+  if(digitalRead(BTN_UP) == LOW){
     menuIndex--;
     if(menuIndex<0){
-      menuIndex=1;
+      menuIndex=2;
     }
     menu();
     delay(200);
   }
 
-  if(digitalRead(BTN_DOWN)==LOW){
-    menuIndex++;
-    if(menuIndex>1){
-      menuIndex=0;
-    }
-    menu();
-    delay(200);
-  }
 
-  if(digitalRead(BTN_SELECT)==LOW){
+  if(digitalRead(BTN_SELECT) == LOW){
     
     if(menuIndex==0){
       quickDraw();
     }
-    else{
+    else if (menuIndex == 1){
       sodaShake();
     }
-
+    else if (menuIndex == 2){
+      samuraiSlash();
+    }
+    updateScreen("Returning...", "Menu");
+    delay(1500);
     menu();
-    delay(300);
+    
   }
 }
 
 
 void quickDraw() {
+  //Serial.println("started");
+  int gameId = 1;
+  radio.write(&gameId,sizeof(gameId));
+  Serial.println("initialized");
 
 
   //DISPLAY START TEXT
-  display("Wait for word", "Then SHOOT!");
-  delay(3000);
-  display("False word=", "Dont press!");
-  delay(3000);
-
-  display("START!");
+  updateScreen("Get Ready...");
   delay(1000);
-  
+
+  for(int i=3; i>0; i--){
+    updateScreen("Starting in", String(i));
+    delay(1000);
+  }
 
 
   bool inGame = true;
   bool draw = false;
+  radio.startListening();
+  radio.flush_rx();
 
-    while (inGame) {
+  while (inGame) {
 
-    int randomTimer = random(500,7000);
-    int randomWord = random(6);
-    String generatedWord = drawWords[randomWord];
+    int randomTimer = random(2000,5000);
+    int randomWord = random(7);
     int identifier;
 
     // Wait random time
@@ -170,83 +204,103 @@ void quickDraw() {
 
       if (radio.available()) {
         radio.read(&identifier, sizeof(identifier));
-        display("Too Early!", "You Lose!");
-        delay(3000);
-        return;
+        if (!draw) {
+          if (identifier==1) {
+            showResult("Too Early!", "Both Loses!");
+          }
+          else if(identifier==2){
+            showResult("Too Early!", "Red Loses!");
+          }
+          else{
+            showResult("Too Early!", "Both Lose!");
+          }
+        }
+        else{
+          if (identifier == 1) {
+            showResult("Green Wins!");
+
+          }
+          else if (identifier == 2) {
+            showResult("Orange Wins!");
+          }
+          else{
+            showResult("Tie!");
+          }
+        }
+          
+          inGame = false;
+          break;
+        }
       }
     }
-
+    if (draw && inGame) {
+      inGame = false;
+      updateScreen("Too Slow!","No Winners!");
+      delay(3000);
+    }
+    randomWord > 0 ? randomWord--: randomWord = randomWord;
+    String generatedWord = drawWords[randomWord];
+    if (generatedWord == "DRAW!") draw = true;
     // Show word
-    display(generatedWord);
-
-    bool isDraw = (generatedWord == "DRAW!");
-
-    unsigned long startTime = millis();
-
-    while (millis() - startTime < 3000) {
-
-      if (radio.available()) {
-        radio.read(&identifier, sizeof(identifier));
-
-        delay(50);
-        if (radio.available()) {
-          radio.read(&identifier, sizeof(identifier));
-          display("Tie!", "Both shot!");
-        }
-        else {
-          if (!isDraw) {
-            display("Wrong Word!", "You Lose!");
-          }
-          else {
-            if (identifier == 1) {
-              display("Blue Wins!");
-            } 
-            else {
-              display("Red Wins!");
-            }
-          }
-        }
-
-        delay(4000);
-        return;
-      }
-    }
-
-    display("Too Slow!");
-    delay(3000);
-    return;
-  }
-}
-
-// Pseudocode for samurai training.
-void samuraiTraining() {
-  // Display instructions ("Hold hands above head. One will cut. one will catch." Something like that).
-  bool wasSwordCaught = true;
-  bool inGame = true;
-  while (inGame == true) {
-    // Send first controller to be cutter, and second to be catcher
-    // Receive cutTime and catchTime from controllers
-    if (cutTime != catchTime + 70.0 && cutTime != catchTime - 70.0 && wasSwordCaught == true) {
-      wasSwordCaught = false;
-      // First controller (cutter) won.
-      // End game.
-    }
-    // Send second controller to be cut, and first to be catcher
-    // Receive cutTime and catchTime from controllers
-    if (cutTime != catchTime + 70.0 && cutTime != catchTime - 70.0 && wasSwordCaught == true) {
-      wasSwordCaught = false;
-      // Second controller (cutter) won.
-      // End game.
+    if (inGame) {
+      updateScreen(generatedWord);
     }
   }
+  radio.flush_rx();
+  radio.stopListening();
+  int end = 5;
+  radio.write(&end, sizeof(end));
+
 }
 
 /*instructions: one controller is going to be a can of soda. Players take turns shaking and passing it around.
 Shaking the controller increases the amount of pressure in the can, until it reaches a threshold and explodes.
-When a player has shaken it as much as they want, they press the button and pass it to the next person. 
-void sodaShake() {
-  bool inGame = true;
-  while (inGame) {
+When a player has shaken it as much as they want, they press the button and pass it to the next person. */
 
+void sodaShake() {
+  Serial.println("started");
+  bool inGame = true;
+  int gameId = 2;
+  radio.write(&gameId, sizeof(gameId));
+  Serial.println("initialized");
+  delay(400);
+  int thresh = random(300,600);
+  radio.write(&thresh,sizeof(thresh));
+  float shakeValue;
+  
+  updateScreen("Shake the soda!","but be careful..");
+  delay(2000);
+  updateScreen("Too much and","it might burst!");
+  delay(2000);
+
+  while (inGame) {
+    delay(1000);
+    updateScreen("Shake!");
+    radio.startListening();
+    while (!radio.available());
+    radio.read(&shakeValue, sizeof(shakeValue));
+
+    if (shakeValue == -1) {
+      updateScreen("BOOM!","You Lost!");
+      radio.flush_rx();
+      radio.stopListening();
+      delay(5000);
+      return;
+    }
+
+    float thing = shakeValue;
+    float otherThing = thresh;
+    float huh = shakeValue / thresh * 5;
+    int what = int(trunc(huh));
+    if (what < 2) {
+     updateScreen(status[what*2], status[what*2+1]);
+    }
+    else {
+      int funny = random(2,9);
+      updateScreen(status[funny*2], status[funny*2+1]);
+    }
+
+    delay(3000);
+    updateScreen("Ready?");
   }
 }
