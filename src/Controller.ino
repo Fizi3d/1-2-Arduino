@@ -213,6 +213,10 @@
 
       case 3:
       playSamuraiSlicer();
+      break;
+
+      case 4:
+      playSamuraiCatcher();
     }
   }
     
@@ -276,6 +280,7 @@
   }
 
   void playSamuraiSlicer() {
+    delay(3000);
     float samStartTime = millis();
     bool inGame = true;
     while (inGame) {
@@ -291,15 +296,14 @@
   }
 
   void playSamuraiCatcher() {
-    float samStartTime = millis();
+    delay(3000);
     bool inGame = true;
     while (inGame) {
-      if (digitalRead(button) == LOW) {
-        float samStopTime = millis();
-        float catchTime = samStopTime - samStartTime;
+      calculateAngle();
+      if (abs(Az) > 1.2) {
+        // Send caught
         inGame = false;
-        // Send catchTime
-      } 
+      }
       delay(5);
     }
   }
