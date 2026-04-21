@@ -277,23 +277,29 @@
 
   void playSamuraiSlicer() {
     float samStartTime = millis();
-    calculateAngle();
-    if (pitchComp < 30) {
-      float samStopTime = millis();
-      float cutTime = samStopTime - samStartTime;
-      // Send cutTime
-    }
-  }
-  /*
-  void playSamuraiCatcher() {
-    float samStartTime = millis();
-    if (digitalRead(button) == HIGH) { // Could change this into an interrupt
-      float samStopTime = millis();
-      float catchTime = samStopTime - samStartTime;
-      // Send catchTime
+    bool inGame = true;
+    while (inGame) {
+      calculateAngle();
+      if (pitchComp < 30) {
+        float samStopTime = millis();
+        float cutTime = samStopTime - samStartTime;
+        inGame = false;
+        // Send cutTime
+      }
+      delay(5);
     }
   }
 
-    delay(5);
+  void playSamuraiCatcher() {
+    float samStartTime = millis();
+    bool inGame = true;
+    while (inGame) {
+      if (digitalRead(button) == LOW) {
+        float samStopTime = millis();
+        float catchTime = samStopTime - samStartTime;
+        inGame = false;
+        // Send catchTime
+      } 
+      delay(5);
+    }
   }
-  */
